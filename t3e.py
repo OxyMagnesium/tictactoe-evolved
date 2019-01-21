@@ -1,8 +1,10 @@
 import t3e_renderer as t3e_r
 
 winner = None
+neutral = 20
 X = 1
 O = 5
+
 
 ################################################################################
 
@@ -12,7 +14,14 @@ def switchplayer(i):
     elif i == O:
         return X
 
+def chk_draw(sum):
+    if sum != 0 and (sum != X and sum != 2*X) and (sum != O and sum != 2*O):
+        return 1
+    else:
+        return 0
+
 def chk_win(grid, sum):
+    global winner
     if sum == 3*X:
         if type(grid) == sub_grid:
             grid.owner = X
@@ -21,7 +30,7 @@ def chk_win(grid, sum):
             winner = X
             return
     if sum == 3*O:
-        if type(grid) == type:
+        if type(grid) == sub_grid:
             grid.owner = O
             return
         else:
@@ -29,34 +38,57 @@ def chk_win(grid, sum):
             return
 
 def chk_grid(grid):
+    global winner
+    draw = 0
     if type(grid) == sub_grid:
         contents = grid.contents
     else:
         contents = grid
-    try:
-        for r in range(3):
-            cell_sum = 0
-            for c in range(3):
-                cell_sum += contents[r][c]
-            chk_win(grid, cell_sum)
-
+    for r in range(3):
+        cell_sum = 0
         for c in range(3):
-            cell_sum = 0
-            for r in range(3):
+            try:
                 cell_sum += contents[r][c]
-            chk_win(grid, cell_sum)
+            except TypeError:
+                pass
+        chk_win(grid, cell_sum)
+        draw += chk_draw(cell_sum)
 
+    for c in range(3):
         cell_sum = 0
-        for d1 in range(3):
+        for r in range(3):
+            try:
+                cell_sum += contents[r][c]
+            except TypeError:
+                pass
+        chk_win(grid, cell_sum)
+        draw += chk_draw(cell_sum)
+
+    cell_sum = 0
+    for d1 in range(3):
+        try:
             cell_sum += contents[d1][d1]
-        chk_win(grid, cell_sum)
+        except TypeError:
+            pass
+    chk_win(grid, cell_sum)
+    draw += chk_draw(cell_sum)
 
-        cell_sum = 0
-        for d2 in range(3):
+    cell_sum = 0
+    for d2 in range(3):
+        try:
             cell_sum += contents[d2][2 - d2]
-        chk_win(grid, cell_sum)
-    except TypeError:
-        pass
+        except TypeError:
+            pass
+    chk_win(grid, cell_sum)
+    draw += chk_draw(cell_sum)
+
+    if draw == 8:
+        if type(grid) == sub_grid:
+            grid.owner = neutral
+            return
+        else:
+            winner = neutral
+            return
 
 ################################################################################
 
@@ -112,17 +144,24 @@ while True:
             print("\nInvalid coordinates.\n")
 
     chk_grid(focus_grid)
-    if focus_grid.owner:
+    if focus_grid.owner and focus_grid.owner != neutral:
         print("\n{0} has won grid ({1}, {2})!".format(t3e_r.displayer(focus_grid.owner), str(focus_grid.location[0] + 1), str(focus_grid.location[1] + 1)))
         major_grid[focus_grid.location[0]][focus_grid.location[1]] = focus_grid.owner
         chk_grid(major_grid)
         if winner:
             print(t3e_r.render(major_grid))
             break
-    print(t3e_r.render(major_grid))
+    if focus_grid.owner == neutral:
+        print("\nGrid ({0}, {1}) is drawn - no winner possible.".format(str(focus_grid.location[0] + 1), str(focus_grid.location[1] + 1)))
+        major_grid[focus_grid.location[0]][focus_grid.location[1]] = focus_grid.owner
+        chk_grid(major_grid)
+        if winner == neutral:
+            print(t3e_r.render(major_grid))
+            break
 
     player = switchplayer(player)
-    print("\n\n{0}'s TURN.".format(t3e_r.displayer(player)))
+    print("\n################################################################################\n{0}'s TURN.".format(t3e_r.displayer(player)))
+    print(t3e_r.render(major_grid))
 
     focus_grid = major_grid[r_coord][c_coord]
     if type(focus_grid) == int:
@@ -142,5 +181,8 @@ while True:
             except Exception:
                 print("\nInvalid coordinates.\n")
 
-print("\n\n{0} has won the game!".format(t3e_r.displayer(winner)))
+if winner != neutral:
+    print("\n\n{0} has won the game!".format(t3e_r.displayer(winner)))
+else:
+    print("Game is drawn!")
 pause = input("Press enter to exit.")
