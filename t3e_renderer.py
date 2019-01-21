@@ -1,4 +1,5 @@
 
+neutral = 20
 X = 1
 O = 5
 
@@ -21,6 +22,8 @@ def displayer(i):
         return 'X'
     elif i == O:
         return 'O'
+    elif i == neutral:
+        return ' '
     elif i == 0:
         return '-'
 
