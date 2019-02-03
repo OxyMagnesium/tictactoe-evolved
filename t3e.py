@@ -105,36 +105,26 @@ class sub_grid:
 major_grid = [[sub_grid(0, 0), sub_grid(0, 1), sub_grid(0, 2)],
               [sub_grid(1, 0), sub_grid(1, 1), sub_grid(1, 2)],
               [sub_grid(2, 0), sub_grid(2, 1), sub_grid(2, 2)]]
-r_coord = 1
-c_coord = 1
 
 class save_state:
     def __init__(self):
-        self.l_major_grid = [[sub_grid(0, 0), sub_grid(0, 1), sub_grid(0, 2)],
-                             [sub_grid(1, 0), sub_grid(1, 1), sub_grid(1, 2)],
-                             [sub_grid(2, 0), sub_grid(2, 1), sub_grid(2, 2)]]
         self.l_r_coord = 1
         self.l_c_coord = 1
-    def save(self, major_grid, r_coord, c_coord):
-        for i in range(3):
-            for j in range(3):
-                self.l_major_grid[i][j].owner = major_grid[i][j].owner
-                self.l_major_grid[i][j].location = major_grid[i][j].location
-                self.l_major_grid[i][j].contents = major_grid[i][j].contents[:]
-        self.l_r_coord = r_coord
-        self.l_c_coord = c_coord
+    def save(self, e_r_coord, e_c_coord):
+        self.l_r_coord = e_r_coord
+        self.l_c_coord = e_c_coord
     def load(self):
         global major_grid
         global r_coord
         global c_coord
-        for i in range(3):
-            for j in range(3):
-                major_grid[i][j].owner = self.l_major_grid[i][j].owner
-                major_grid[i][j].location = self.l_major_grid[i][j].location
-                major_grid[i][j].contents = self.l_major_grid[i][j].contents[:]
+        global player
+        major_grid[self.l_r_coord][self.l_c_coord].contents[r_coord][c_coord] = 0
         r_coord = self.l_r_coord
         c_coord = self.l_c_coord
+        player = switch_player(player)
 
+r_coord = 1
+c_coord = 1
 front_save = save_state()
 back_save = save_state()
 player = X #Change to accept from user later
@@ -142,8 +132,8 @@ player = X #Change to accept from user later
 ################################################################################
 
 while True:
-    back_save.save(front_save.l_major_grid, front_save.l_r_coord, front_save.l_c_coord)
-    front_save.save(major_grid, r_coord, c_coord)
+    back_save.save(front_save.l_r_coord, front_save.l_c_coord)
+    front_save.save(r_coord, c_coord)
 
     try:
         print("\n################################################################################\n{0}'s TURN."
@@ -158,9 +148,7 @@ while True:
                     tr_coord = int(input("Enter row coordinate of new grid: ")) - 1
                     tc_coord = int(input("Enter col coordinate of new grid: ")) - 1
                     if type(major_grid[tr_coord][tc_coord]) == sub_grid:
-                        r_coord = tr_coord
-                        c_coord = tc_coord
-                        focus_grid = major_grid[r_coord][c_coord]
+                        focus_grid = major_grid[tr_coord][tc_coord]
                         break
                     else:
                         print("\nInvalid coordinates.\n")
@@ -197,7 +185,6 @@ while True:
         if focus_grid.owner == neutral:
             print("\nGrid ({0}, {1}) is drawn - no winner possible.".format(str(focus_grid.location[0] + 1),
                                                                             str(focus_grid.location[1] + 1)))
-            major_grid[focus_grid.location[0]][focus_grid.location[1]] = focus_grid.owner
             chk_grid(major_grid)
             if winner == neutral:
                 print(t3e_r.render(major_grid))
@@ -210,7 +197,6 @@ while True:
         if choice == 1:
             print("Continuing from previous turn.")
             back_save.load()
-            player = switch_player(player)
             continue
         elif choice == 2:
             pause = input("Game ended. Press enter to exit.")
