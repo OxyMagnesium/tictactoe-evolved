@@ -30,14 +30,15 @@ def displayer(i):
 def render_line(grid, m_row, s_row):
     line = ' '
     for i in range(3):
-        try:
-            for j in range(3):
-                line += '{0} '.format(displayer(grid[m_row][i].contents[s_row][j]))
-        except AttributeError:
+        if grid[m_row][i].owner:
             if s_row == 1:
-                line += '  {0}   '.format(displayer(grid[m_row][i]))
+                line += '  {0}   '.format(displayer(grid[m_row][i].owner))
             else:
                 line += '      '
+        else:
+            for j in range(3):
+                line += '{0} '.format(displayer(grid[m_row][i].contents[s_row][j]))
+
         line += '| '
     return line[:-2]
 
