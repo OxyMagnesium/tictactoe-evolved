@@ -67,8 +67,8 @@ def chk_grid(grid):
                 cell_sum += contents[r][c].owner
         winner = chk_win(grid, cell_sum)
         draw += chk_draw(cell_sum)
-    if winner:
-        return winner
+        if winner:
+            return winner
 
     for c in range(3):
         cell_sum = 0
@@ -79,8 +79,8 @@ def chk_grid(grid):
                 cell_sum += contents[r][c].owner
         winner = chk_win(grid, cell_sum)
         draw += chk_draw(cell_sum)
-    if winner:
-        return winner
+        if winner:
+            return winner
 
     cell_sum = 0
     for d1 in range(3):
