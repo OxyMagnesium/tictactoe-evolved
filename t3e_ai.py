@@ -14,13 +14,13 @@ X = 1
 O = 5
 
 #Recursion lengths
-NORMAL_ITERS = 1
-HARD_ITERS = 3
-LEG_ITERS = 7
+NORMAL_ITERS = 0
+HARD_ITERS = 2
+LEG_ITERS = 4
 
 #Scores
-WIN_PLAYER = 13
-WIN_OPPONENT = 5
+WIN_PLAYER = 10
+WIN_OPPONENT = 7
 WIN_NONE = 1
 
 ################################################################################
@@ -97,27 +97,27 @@ def scan_grid(grid, player, mode = 1):
     cells_sum = 0
     return score_grid
 
-def correct_for_owner(major_grid, start_loc, iters, player, cutoff):
+def correct_for_owner(major_grid, start_loc, iters, player):
     if major_grid[start_loc[0]][start_loc[1]].owner:
-        if iters % 2 != 0:
+        if iters % 2 == 0:
             iters -= 1
+        iters -= 2
         score_grid = [[NEG_INF for a in range(3)] for b in range(3)]
         for i in range(3):
             for j in range(3):
                 if not major_grid[i][j].owner:
                     score_grid[i][j] = scan_path(copy_grid(major_grid), (i, j),
-                                                 iters, player, cutoff)
+                                                 iters, player)
         return random.choice(get_max_locs(score_grid))
     else:
         return start_loc
 
 ################################################################################
 
-def scan_path(major_grid, start_loc, iters, player, cutoff):
-    start_loc = correct_for_owner(major_grid, start_loc, iters, player, cutoff)
+def scan_path(major_grid, start_loc, iters, player):
+    start_loc = correct_for_owner(major_grid, start_loc, iters, player)
     score_grid = scan_grid(major_grid[start_loc[0]][start_loc[1]].contents, player)
     mult_grid = scan_grid(major_grid, player)
-    c_cutoff = 4.5
 
     for i in range(3):
         for j in range(3):
@@ -133,18 +133,15 @@ def scan_path(major_grid, start_loc, iters, player, cutoff):
                 new_grid = scan_grid(major_grid_copy[start_loc[0]][start_loc[1]].contents,
                                      player, -1)
                 for a, b, c in new_grid:
-                    score_grid[i][j] += (a + b + c)/2
+                    score_grid[i][j] += (a + b + c)*4
             else:
-                score_grid[i][j] += WIN_PLAYER*4
-                winner = t3e_u.chk_grid(major_grid_copy)
-                if winner:
+                score_grid[i][j] += WIN_PLAYER*16
+                if t3e_u.chk_grid(major_grid_copy):
                     return POS_INF
 
-            if iters > 0 and cutoff > time():
-                c_cutoff -= 1
-                a_cutoff = cutoff - (cutoff - time())*c_cutoff/9
+            if iters > 0:
                 score_grid[i][j] -= scan_path(major_grid_copy, (i, j), iters - 1,
-                                              t3e_u.switch_player(player), a_cutoff)*mult_grid[i][j]/6
+                                              t3e_u.switch_player(player))*mult_grid[i][j]/4
 
     return max(max(score_grid))
 
@@ -159,15 +156,13 @@ def compute_move(major_grid, start_loc, difficulty, player, turn):
 
     elif difficulty == 2:
         iters = NORMAL_ITERS
-        cutoff = time() + 1*(1.1**turn)
     elif difficulty == 3:
         iters = HARD_ITERS
-        cutoff = time() + 2*(1.1**turn)
     elif difficulty == 4:
         iters = LEG_ITERS
-        cutoff = time() + 4*(1.1**turn)
+    iters += int(turn/15)
 
-    start_loc = correct_for_owner(major_grid, start_loc, 1, player, cutoff)
+    start_loc = correct_for_owner(major_grid, start_loc, 1, player)
     score_grid = scan_grid(major_grid[start_loc[0]][start_loc[1]].contents, player)
     mult_grid = scan_grid(major_grid, player)
     pool = Pool(processes = 9)
@@ -185,24 +180,22 @@ def compute_move(major_grid, start_loc, difficulty, player, turn):
 
             if not major_grid_copy[start_loc[0]][start_loc[1]].owner:
                 new_grid = scan_grid(major_grid_copy[start_loc[0]][start_loc[1]].contents,
-                                     player)
+                                     player, -1)
                 for a, b, c in new_grid:
-                    score_grid[i][j] += (a + b + c)/2
+                    score_grid[i][j] += (a + b + c)*4
             else:
-                score_grid[i][j] += WIN_PLAYER*4
-                winner = t3e_u.chk_grid(major_grid_copy)
-                if winner:
+                score_grid[i][j] += WIN_PLAYER*16
+                if t3e_u.chk_grid(major_grid_copy):
                     score_grid[i][j] = POS_INF
                     continue
 
-            player = t3e_u.switch_player(player)
             results[(i, j)] = pool.apply_async(scan_path, args = (major_grid_copy,
                                                                   (i, j), iters,
-                                                                  player, cutoff))
+                                                                  t3e_u.switch_player(player)))
 
     pool.close()
     for loc in results:
-        score_grid[loc[0]][loc[1]] -= results[loc].get()*mult_grid[i][j]/6
+        score_grid[loc[0]][loc[1]] -= results[loc].get()*mult_grid[i][j]/4
     pool.join()
     print("Final scores: " + str((score_grid)))
 
