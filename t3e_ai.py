@@ -190,6 +190,6 @@ def compute_move(major_grid, start_loc, difficulty, player, turn):
     for loc in results:
         score_grid[loc[0]][loc[1]] -= results[loc].get()*mult_grid[i][j]/4
     pool.join()
-    print("Final scores: " + str((score_grid)))
+    #print("Final scores: " + str((score_grid)))
 
     return ((start_loc[0], start_loc[1]), random.choice(get_max_locs(score_grid)))
