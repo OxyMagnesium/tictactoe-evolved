@@ -101,7 +101,7 @@ Simple command line based game.
 3    - O - | - - - | O - -
      - - - | - - X | - - -
 ```
-* Upon winning a grid, the standard movement rules still apply. In the above case, O will have to move in grid (1, 3). However, if a player is supposed to move in a grid that has already been owner by anyone, they get to go in any available grid of their choice. For example, if O goes in cell (2, 2) of grid (1, 3) in the above case: 
+* Upon winning a grid, the standard movement rules still apply. In the above case, O will have to move in grid (1, 3). However, if a player is supposed to move in a grid that has already been owned by anyone, they get to go in any available grid of their choice. For example, if O goes in cell (2, 2) of grid (1, 3) in the above case: 
 ```
        1       2       3
      1 2 3
