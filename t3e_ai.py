@@ -3,22 +3,15 @@
 import t3e_resources as t3e_u
 import random
 from multiprocessing import Pool
-from os import cpu_count
 from time import time
 from copy import deepcopy
 
-NEG_INF = -32768
-POS_INF = 32767
 NEUTRAL = 20
 X = 1
 O = 5
 
-#Recursion lengths
-NORMAL_ITERS = 0
-HARD_ITERS = 2
-LEG_ITERS = 4
-
-#Scores
+NEG_INF = -32768
+POS_INF = 32767
 WIN_PLAYER = 10
 WIN_OPPONENT = 7
 WIN_NONE = 1
@@ -99,9 +92,9 @@ def scan_grid(grid, player, mode = 1):
 
 def correct_for_owner(major_grid, start_loc, iters, player):
     if major_grid[start_loc[0]][start_loc[1]].owner:
+        iters /= 2
         if iters % 2 == 0:
             iters -= 1
-        iters -= 2
         score_grid = [[NEG_INF for a in range(3)] for b in range(3)]
         for i in range(3):
             for j in range(3):
@@ -135,7 +128,7 @@ def scan_path(major_grid, start_loc, iters, player):
                 for a, b, c in new_grid:
                     score_grid[i][j] += (a + b + c)*4
             else:
-                score_grid[i][j] += WIN_PLAYER*16
+                score_grid[i][j] += WIN_PLAYER*24
                 if t3e_u.chk_grid(major_grid_copy):
                     return POS_INF
 
@@ -148,6 +141,7 @@ def scan_path(major_grid, start_loc, iters, player):
 
 def compute_move(major_grid, start_loc, difficulty, player, turn):
     random.seed()
+    iters = 0
 
     if difficulty == 1:
         start_loc = correct_for_owner(major_grid, start_loc, 0, player, 0)
@@ -155,12 +149,11 @@ def compute_move(major_grid, start_loc, difficulty, player, turn):
         return ((start_loc[0], start_loc[1]), random.choice(get_max_locs(score_grid)))
 
     elif difficulty == 2:
-        iters = NORMAL_ITERS
+        iters += int(turn/50)*2
     elif difficulty == 3:
-        iters = HARD_ITERS
+        iters += int(turn/25)*2
     elif difficulty == 4:
-        iters = LEG_ITERS
-    iters += int(turn/15)
+        iters += int(turn/15)*2
 
     start_loc = correct_for_owner(major_grid, start_loc, 1, player)
     score_grid = scan_grid(major_grid[start_loc[0]][start_loc[1]].contents, player)
@@ -184,7 +177,7 @@ def compute_move(major_grid, start_loc, difficulty, player, turn):
                 for a, b, c in new_grid:
                     score_grid[i][j] += (a + b + c)*4
             else:
-                score_grid[i][j] += WIN_PLAYER*16
+                score_grid[i][j] += WIN_PLAYER*24
                 if t3e_u.chk_grid(major_grid_copy):
                     score_grid[i][j] = POS_INF
                     continue
