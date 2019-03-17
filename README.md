@@ -1,6 +1,6 @@
 # TicTacToe Evolved
 
-Simple command line based game.
+Simple yet engaging command line based game featuring player vs. player and player vs. computer play. 
 
 ## How to play:
 * The grids are labelled starting from the top left as below.
@@ -27,7 +27,7 @@ Simple command line based game.
 1  2 - - - | - - - | - - -
    3 - - - | - - - | - - -
     -------|-------|-------
-     - - - | X - - | - - -
+     - - - | X - - | - - - 
 2    - - - | - - - | - - -
      - - - | - - - | - - -
     -------|-------|-------
@@ -126,12 +126,13 @@ Simple command line based game.
    3 - - - | - - - | - X -
     -------|-------|-------
      X - - |       | - - -
-2    - - - |   X   | - X -
+2  > - - - |   X   | - X -
      - - - |       | X - -
     -------|-------|-------
      - - - | - - - | - - -
 3    - O - | - - - | O - -
      - - - | - - X | - - -
+                       ^
 ```
 *  Ownership of the grid is irrelevant in this regard, because even if O lands on grid (2, 2) now, they can pick any grid to move in.
 ```
@@ -145,9 +146,10 @@ Simple command line based game.
 2    - - - |   X   | - X -
      - - - |       | X - -
     -------|-------|-------
-     - - O | - - - | - - -
+   > - - O | - - - | - - -
 3    - O - | - - - | O - -
      - - - | - - X | - - -
+         ^
 ```
 ################################################################################
 * In order to win, a player must own 3 grids in a row on the major grid. For example, O has won in the case below:
