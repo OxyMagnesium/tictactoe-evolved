@@ -1,23 +1,20 @@
 #Logic for rendering both the primary and secondary grids.
 
 import t3e_resources as t3e_u
-
-NEUTRAL = 20
-X = 1
-O = 5
+from t3e_resources import NEUTRAL, X, O
 
 '''
- 0 0 0 | 0 0 0 | 0 0 0
- 0 0 0 | 0 0 0 | 0 0 0
- 0 0 0 | 0 0 0 | 0 0 0
+ - - - | - - - | - - -
+ - - - | - - - | - - -
+ - - - | - - - | - - -
 -------|-------|-------
- 0 0 0 | 0 0 0 | 0 0 0
- 0 0 0 | 0 0 0 | 0 0 0
- 0 0 0 | 0 0 0 | 0 0 0
+ - - - | - - - | - - -
+ - - - | - - - | - - -
+ - - - | - - - | - - -
 -------|-------|-------
- 0 0 0 | 0 0 0 | 0 0 0
- 0 0 0 | 0 0 0 | 0 0 0
- 0 0 0 | 0 0 0 | 0 0 0
+ - - - | - - - | - - -
+ - - - | - - - | - - -
+ - - - | - - - | - - -
 '''
 
 def render_line(grid, m_row, s_row):
@@ -31,7 +28,6 @@ def render_line(grid, m_row, s_row):
         else:
             for j in range(3):
                 line += '{0} '.format(t3e_u.displayer(grid[m_row][i].contents[s_row][j]))
-
         line += '| '
     return line[:-2]
 

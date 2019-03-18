@@ -1,34 +1,35 @@
 #Main program.
 
-import t3e_resources as t3e_u
-import t3e_renderer as t3e_r
-from t3e_ai import compute_move
-from threading import Thread
+import threading
 from copy import deepcopy
 from time import sleep
 
-winner = None
-NEUTRAL = 20
-X = 1
-O = 5
+import t3e_renderer as t3e_r
+import t3e_resources as t3e_u
+from t3e_resources import NEUTRAL, X, O
+from t3e_ai import compute_move
+
+VERSION = '0.9.0'
 
 ################################################################################
+
+class save_state:
+    def __init__(self):
+        self.grid = []
+        self.player = 0
+        self.r = 0
+        self.c = 0
+        self.loaded = True
+    def save(self, major_grid, player, r_coord, c_coord, loaded):
+        self.grid = deepcopy(major_grid)
+        self.player = player
+        self.r = r_coord
+        self.c = c_coord
+        self.loaded = loaded
 
 #Output will start with one of the following with the content in double quotes:
 #INF - Simply display following content
 #REQ - Ask for input with following content
-#To access KB interrupt menu, input "KBI"
-
-def process_coords(io_h):
-    while True:
-        input = io_h.get()
-        if input == 'KBI':
-            raise KeyboardInterrupt
-        else:
-            try:
-                return (int(input.split(',')[0]), int(input.split(',')[1]))
-            except ValueError:
-                io_h.send('REQ "The values you have entered are invalid. Try again: "')
 
 class io_handler:
     def __init__(self):
@@ -50,19 +51,16 @@ class io_handler:
         self.wait = True
         return self.buffer
 
-class save_state:
-    def __init__(self):
-        self.grid = []
-        self.player = 0
-        self.r = 0
-        self.c = 0
-        self.loaded = True
-    def save(self, major_grid, player, r_coord, c_coord, loaded):
-        self.grid = deepcopy(major_grid)
-        self.player = player
-        self.r = r_coord
-        self.c = c_coord
-        self.loaded = loaded
+def process_coords(io_h):
+    while True:
+        input = io_h.get()
+        if input == 'KBI':
+            raise KeyboardInterrupt
+        else:
+            try:
+                return (int(input.split(',')[0]), int(input.split(',')[1]))
+            except ValueError:
+                io_h.send('REQ "The values you have entered are invalid. Try again: "')
 
 ################################################################################
 
@@ -206,7 +204,7 @@ def main(io_h, players):
 
 def play():
     io_h = io_handler()
-    game_thread = Thread(target = main, args = (io_h, None))
+    game_thread = threading.Thread(target = main, args = (io_h, None))
     game_thread.start()
 
     while game_thread.is_alive():

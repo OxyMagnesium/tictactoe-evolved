@@ -1,14 +1,13 @@
 #Contains logic for computer moves.
 
-import t3e_resources as t3e_u
+import multiprocessing
+import logging
 import random
-from multiprocessing import Pool
-from time import time
 from copy import deepcopy
+from time import time
 
-NEUTRAL = 20
-X = 1
-O = 5
+import t3e_resources as t3e_u
+from t3e_resources import NEUTRAL, X, O
 
 NEG_INF = -32768
 POS_INF = 32767
@@ -158,7 +157,7 @@ def compute_move(major_grid, start_loc, difficulty, player, turn):
     start_loc = correct_for_owner(major_grid, start_loc, 1, player)
     score_grid = scan_grid(major_grid[start_loc[0]][start_loc[1]].contents, player)
     mult_grid = scan_grid(major_grid, player)
-    pool = Pool(processes = 9)
+    pool = multiprocessing.Pool(processes = 9)
     results = {}
 
     for i in range(3):
@@ -190,6 +189,7 @@ def compute_move(major_grid, start_loc, difficulty, player, turn):
     for loc in results:
         score_grid[loc[0]][loc[1]] -= results[loc].get()*mult_grid[i][j]/4
     pool.join()
-    #print("Final scores: " + str((score_grid)))
+
+    logging.debug(f'Scores = {score_grid}')
 
     return ((start_loc[0], start_loc[1]), random.choice(get_max_locs(score_grid)))
