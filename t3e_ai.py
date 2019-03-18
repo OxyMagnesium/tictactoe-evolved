@@ -144,7 +144,7 @@ def compute_move(major_grid, start_loc, difficulty, player, turn):
     iters = 0
 
     if difficulty == 1:
-        start_loc = correct_for_owner(major_grid, start_loc, 0, player, 0)
+        start_loc = correct_for_owner(major_grid, start_loc, 0, player)
         score_grid = scan_grid(major_grid[start_loc[0]][start_loc[1]].contents, player)
         return ((start_loc[0], start_loc[1]), random.choice(get_max_locs(score_grid)))
 
