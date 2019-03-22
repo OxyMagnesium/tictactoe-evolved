@@ -9,7 +9,7 @@ import t3e_resources as t3e_u
 from t3e_resources import NEUTRAL, X, O
 from t3e_ai import compute_move
 
-VERSION = '0.9.0'
+VERSION = '0.9.2'
 
 ################################################################################
 
@@ -32,24 +32,36 @@ class save_state:
 #REQ - Ask for input with following content
 
 class io_handler:
-    def __init__(self):
-        self.buffer = ''
-        self.wait = True
-    def send(self, intake):
+    def __init__(self, use_secondary = False):
+        self.use_secondary = use_secondary
+        self.primary = ['']
+        self.in_primary_queue = 0
+        self.secondary = ['']
+        self.in_secondary_queue = 0
+    def send(self, intake, primary = True):
         try:
             if intake.split('"')[0] == '' and intake.split('"')[2] == '':
-                self.buffer = 'INF ' + intake
-            else:
-                self.buffer = intake
+                intake = 'INF ' + intake
         except IndexError:
             pass
-        self.wait = False
+        if primary:
+            self.primary.append(intake)
+            self.in_primary_queue += 1
+        else:
+            self.secondary.append(intake)
+            self.in_secondary_queue += 1
         sleep(0.1)
-    def get(self):
-        while self.wait:
-            sleep(0.1)
-        self.wait = True
-        return self.buffer
+    def get(self, primary = False):
+        if primary or not self.use_secondary:
+            while self.in_primary_queue == 0:
+                sleep(0.1)
+            self.in_primary_queue -= 1
+            return self.primary.pop(1)
+        else:
+            while self.in_secondary_queue == 0:
+                sleep(0.1)
+            self.in_secondary_queue -= 1
+            return self.secondary.pop(1)
 
 def process_coords(io_h):
     while True:
@@ -65,7 +77,7 @@ def process_coords(io_h):
 ################################################################################
 
 def main(io_h, players):
-    if not players:
+    if players is None:
         io_h.send('REQ "Select player count (1/2): "')
         players = int(io_h.get())
     ai_enabled = True if players == 1 else False
