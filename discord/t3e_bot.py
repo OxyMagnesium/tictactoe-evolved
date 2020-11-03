@@ -1,6 +1,7 @@
 #Discord bot for t3e
 
 import threading
+import asyncio
 import logging
 import random
 import time
@@ -27,6 +28,7 @@ class game_obj:
         self.player_X = None
         self.player_O = None
         self.player_a = None
+        self.active_time = time.time()
         self.io_h = t3e.io_handler(use_secondary = True)
         self.game_thread = threading.Thread(target = t3e.main,
                                             args = (self.io_h, self.get_p_count(ctx)))
@@ -75,11 +77,27 @@ class game_obj:
             self.buffer = ''
         await self.channel.send(content)
     async def send_input(self, ctx, intake):
+        self.active_time = time.time()
         if ctx.author == self.player_a:
             self.io_h.send(intake, primary = False)
             await self.get_output()
         else:
             await ctx.send(f'It is not your turn right now.')
+
+async def timeout_checker(games, players):
+    while True:
+        for id, ref in enumerate(games):
+            if type(ref) is str:
+                continue
+            if time.time() - ref.active_time > 300:
+                logging.info(f'Game {id} timed out ')
+                games.pop(id)
+                for _ in range(2):
+                    for player in players:
+                        if players[player] == id:
+                            del players[player]
+                            break
+        await asyncio.sleep(1)
 
 def get_guild_channel(ctx):
     return f'#{ctx.channel}, {ctx.guild}'
@@ -229,7 +247,6 @@ async def g(ctx):
 async def on_message(ctx):
     if ctx.author == bot.user:
         return
-
     await bot.process_commands(ctx)
 
 @bot.event
@@ -268,6 +285,9 @@ if __name__ == '__main__':
                 exit()
     else:
         logging.info('Token acquired from code')
+
+    bot.loop.create_task(timeout_checker(games, players))
+    logging.info('Timeout checker started')
 
     logging.info('Initialization complete')
 
