@@ -5,14 +5,96 @@ X = 1
 O = 5
 
 class sub_grid:
-    def __init__(self, r, c):
-        self.owner = 0
-        self.location = (r, c)
-        self.contents = [[0, 0, 0],
-                         [0, 0, 0],
-                         [0, 0, 0]]
-    def update_cell(self, r, c, player):
-        self.contents[r][c] = player
+    def __init__(self, s_grid = None):
+        if s_grid is None:
+            self.owner = 0
+            self.threats = {X: 0, O: 0}
+            self.contents = [[0 for _ in range(3)] for _ in range(3)]
+        else:
+            self.owner = s_grid.owner
+            self.threats = {X: s_grid.threats[X], O: s_grid.threats[O]}
+            self.contents = [row[:] for row in s_grid.contents]
+
+    def get_owner(self):
+        return self.owner
+
+    def get_threats(self, player = None):
+        if player:
+            return self.threats[player]
+        else:
+            return self.threats
+
+    def get_contents(self, cell = None):
+        if cell:
+            return self.contents[cell[0]][cell[1]]
+        else:
+            return self.contents
+
+    def update_cell(self, loc, player, move_caps_grid = None):
+        self.contents[loc[0]][loc[1]] = player
+        if move_caps_grid is None:
+            move_caps_grid = move_won_grid(self, loc, player)
+        if move_caps_grid:
+            self.owner = player
+        elif all(all(row) for row in self.contents):
+            self.owner = NEUTRAL
+        return self.owner
+
+    def __getitem__(self, index):
+        return self.contents[index]
+
+
+class major_grid:
+    def __init__(self, m_grid = None):
+        if m_grid is None:
+            self.threats = {X: 0, O: 0}
+            self.contents = [[sub_grid() for _ in range(3)] for _ in range(3)]
+        else:
+            self.threats = {X: m_grid.threats[X], O: m_grid.threats[O]}
+            self.contents = [[sub_grid(s_grid) for s_grid in row]
+                             for row in m_grid.contents]
+
+    def get_obj(self, loc):
+        return self.contents[loc[0]][loc[1]]
+
+    def get_owner(self, loc):
+        return self.contents[loc[0]][loc[1]].owner
+
+    def get_threats(self, loc = None, player = None):
+        if loc:
+            return self.contents[loc[0]][loc[1]].get_threats(player)
+        else:
+            return self.threats[player] if player else self.threats
+
+    def get_contents(self, loc = None, cell = None):
+        if loc:
+            return self.contents[loc[0]][loc[1]].get_contents(cell)
+        else:
+            return [[s_grid.owner for s_grid in row] for row in self.contents]
+
+    def __getitem__(self, index):
+        return self.contents[index]
+
+
+def move_won_grid(grid, move, player):
+    grid_cont = grid.get_contents()
+    row_sum = 0
+    col_sum = 0
+    d1_sum = 0
+    d2_sum = 0
+    for i in range(3):
+        row_sum += grid_cont[move[0]][i]
+        col_sum += grid_cont[i][move[1]]
+    if move[0] == move[1]:
+        for i in range(3):
+            d1_sum += grid_cont[i][i]
+    if move[0] + move[1] == 2:
+        for i in range(3):
+            d2_sum += grid_cont[2 - i][i]
+    if 3*player in (row_sum, col_sum, d1_sum, d2_sum):
+        return True
+    else:
+        return False
 
 def displayer(i):
     if i == X:

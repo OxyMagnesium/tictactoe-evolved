@@ -6,8 +6,9 @@ from time import sleep
 
 import t3e_renderer as t3e_r
 import t3e_resources as t3e_u
+import t3e_ai_v2 as t3e_ai
 from t3e_resources import NEUTRAL, X, O
-from t3e_ai import compute_move
+
 
 VERSION = '0.9.2'
 
@@ -92,7 +93,7 @@ def main(io_h, players):
     turn_m0 = save_state()
     turn_m1 = save_state()
     turn_m2 = save_state()
-    major_grid = [[t3e_u.sub_grid(a, b) for b in range(3)] for a in range(3)]
+    major_grid = t3e_u.major_grid()
     player = X
     r_coord = 1
     c_coord = 1
@@ -106,6 +107,7 @@ def main(io_h, players):
             io_h.send('"{0}\'s TURN."'.format(t3e_u.displayer(player)))
             io_h.send('"{0}"'.format(t3e_r.render(major_grid)))
             focus_grid = major_grid[r_coord][c_coord]
+            focus_loc = (r_coord, c_coord)
 
             if not ai_enabled or player != ai_player:
                 if focus_grid.owner:
@@ -125,8 +127,8 @@ def main(io_h, players):
                             io_h.send('"\nInvalid coordinates.\n"')
 
                 io_h.send('"\nYou are moving in grid ({0}, {1})."'
-                          .format(str(focus_grid.location[0] + 1),
-                                  str(focus_grid.location[1] + 1)))
+                          .format(str(focus_loc[0] + 1),
+                                  str(focus_loc[1] + 1)))
                 while True:
                     try:
                         io_h.send('REQ "Enter coordinates of your move (R, C): "')
@@ -136,7 +138,7 @@ def main(io_h, players):
                         if focus_grid.contents[tr_coord][tc_coord] == 0:
                             r_coord = tr_coord
                             c_coord = tc_coord
-                            focus_grid.update_cell(r_coord, c_coord, player)
+                            focus_grid.update_cell((r_coord, c_coord), player)
                             break
                         else:
                             io_h.send('"\nInvalid coordinates.\n"')
@@ -144,24 +146,29 @@ def main(io_h, players):
                         io_h.send('"\nInvalid coordinates.\n"')
             else:
                 io_h.send('"\nWaiting for computer to move."')
-                ai_move = compute_move(major_grid, focus_grid.location, difficulty,
-                                       player, turn)
+                r_bin = []
+                t3e_ai.compute_move_v2(major_grid, focus_loc, difficulty,
+                                       player, turn, r_bin, lambda: False)
+                ai_move = r_bin[0]
                 focus_grid = major_grid[ai_move[0][0]][ai_move[0][1]]
                 r_coord = ai_move[1][0]
                 c_coord = ai_move[1][1]
-                focus_grid.update_cell(r_coord, c_coord, player)
                 loc = 'grid ({0}, {1}), cell ({2}, {3})'.format(ai_move[0][0] + 1,
                                                                 ai_move[0][1] + 1,
                                                                 ai_move[1][0] + 1,
                                                                 ai_move[1][1] + 1,)
                 io_h.send('"{0} moved in {1}."'.format(t3e_u.displayer(player), loc))
 
-            t3e_u.chk_grid(focus_grid)
+            focus_grid.update_cell((r_coord, c_coord), player)
+            move_eval = t3e_ai.evaluate_move(major_grid, focus_loc, difficulty, player, (r_coord, c_coord))
+            board_eval = t3e_ai.evaluate_move(major_grid, None, difficulty, player, focus_loc)
+            t3e_ai.update_threats(major_grid, focus_loc, move_eval[2], player)
             if focus_grid.owner and focus_grid.owner != NEUTRAL:
                 io_h.send('"\n{0} has won grid ({1}, {2})!"'
                           .format(t3e_u.displayer(focus_grid.owner),
-                                  str(focus_grid.location[0] + 1),
-                                  str(focus_grid.location[1] + 1)))
+                                  str(focus_loc[0] + 1),
+                                  str(focus_loc[1] + 1)))
+                t3e_ai.update_threats(major_grid, None, board_eval[2], player)
                 winner = t3e_u.chk_grid(major_grid)
                 if winner:
                     io_h.send('"\n################################################################################\n"')
@@ -169,8 +176,8 @@ def main(io_h, players):
                     break
             elif focus_grid.owner == NEUTRAL:
                 io_h.send('"\nGrid ({0}, {1}) is drawn - no winner possible."'
-                          .format(str(focus_grid.location[0] + 1),
-                                  str(focus_grid.location[1] + 1)))
+                          .format(str(focus_loc[0] + 1),
+                                  str(focus_loc[1] + 1)))
                 t3e_u.chk_grid(major_grid)
                 if winner == NEUTRAL:
                     io_h.send(t3e_r.render(major_grid))
@@ -231,7 +238,7 @@ def play():
         elif intake[0].strip() == 'END':
             break
         else:
-            print("An internal error occured.")
+            print(f"Received invalid command '{intake[0].strip()}'")
 
     input("Press enter to exit. ")
     exit()
